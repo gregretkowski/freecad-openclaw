@@ -1,0 +1,40 @@
+OpenClaw FreeCAD toolchain — complete snapshot 2026-11-01
+=========================================================
+
+Contents:
+  OVERVIEW.md  start here - full program write-up (architecture,
+               approach, version progression, lessons)
+Layout (mirrors the live host):
+  freecad/    server + all helper scripts referenced by the skills
+  systemd/    freecad-server.service (user unit)
+  skills/     freecad-remote-control (SKILL.md + techdraw-hlr-drawings.md)
+              freecad-tcp-assembly  (SKILL.md + fc_client.py)
+
+INSTALL (target: any OpenClaw gateway host)
+-------------------------------------------
+1. mkdir -p ~/freecad && cp freecad/* ~/freecad/ && chmod +x ~/freecad/launch.sh
+2. Download FreeCAD 1.1.4 AppImage into ~/freecad/:
+   https://github.com/FreeCAD/FreeCAD/releases (1.1.4 Linux x86_64 py311 AppImage)
+3. Host deps: xvfb (apt install xvfb), and for the drawing pipeline:
+   python3 -m pip install pillow
+4. Install the service:
+   mkdir -p ~/.config/systemd/user && cp systemd/freecad-server.service ~/.config/systemd/user/
+   systemctl --user daemon-reload && systemctl --user enable --now freecad-server
+5. Verify: systemctl --user status freecad-server; then
+   python3 ~/freecad/fc.py 'ping'  (client helper, TCP 127.0.0.1:9999)
+6. Install skills: copy skills/freecad-remote-control into your agent's
+   workshop-skills dir (or ~/.openclaw/workspace/skills/), same for
+   skills/freecad-tcp-assembly, then restart the agent session.
+
+NOTES
+-----
+- The skills reference absolute paths /home/openclaw/freecad/*.py.
+  If the target user is not 'openclaw', either create that layout or
+  sed the skill files to the new home dir.
+- freecad_server_v3.py is included only because the tcp-assembly skill
+  cites it historically; v4 is the one launch.sh runs.
+- Project-specific scripts (gen_asm_v7, make_sheets_v7, *_v7, *_v6...)
+  are worked examples the skills reference as patterns, not generic
+  libraries — they expect an expansion-joint project dir to exist.
+- launch.sh feeds FreeCAD's stdin from a FIFO so the console doesn't
+  exit on EOF; quit_freecad.py is the ExecStop (clean QUIT over TCP).

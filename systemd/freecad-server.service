@@ -1,0 +1,16 @@
+[Unit]
+Description=FreeCAD API server v4 (xvfb, TCP 127.0.0.1:9999)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/freecad
+ExecStart=%h/freecad/launch.sh
+# clean shutdown: QUIT command exits FreeCAD while X is still alive (no X11 spam)
+ExecStop=%h/freecad/quit_freecad.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=default.target
